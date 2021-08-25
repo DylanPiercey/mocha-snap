@@ -8,6 +8,7 @@ const update =
   process.env.UPDATE_SNAPSHOTS || process.argv.includes("--update");
 const noop = () => {};
 const cwd = process.cwd();
+const cwdRegExp = new RegExp(escapeRegExp(cwd), "gi");
 const snapDir = "__snapshots__";
 const store = ((fs as any).__snap__ ??= {
   // Hangs storage off of fs object to ensure it is
@@ -183,7 +184,7 @@ async function resolveFixture(fixture: unknown) {
         isAggregationError(error)
           ? error.errors.map((it) => it.message).join("\n\n")
           : error.message
-      ).replaceAll(cwd, ".");
+      ).replace(cwdRegExp, ".");
     }
   }
 
@@ -264,6 +265,10 @@ function escapeFilename(str: string) {
 
 function escapeGlob(str: string) {
   return str.replace(/[*?[{}()!\\\\]]/g, "\\$&");
+}
+
+function escapeRegExp(str: string) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function isAggregationError(error: Error): error is AggregateError {
