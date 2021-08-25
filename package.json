@@ -31,6 +31,7 @@
   },
   "files": [
     "dist",
+    "!**/__tests__",
     "!*.tsbuildinfo"
   ],
   "homepage": "https://github.com/dylanpiercey/mocha-snap",
@@ -63,5 +64,6 @@
     "test": "NODE_ENV=test npm run mocha -- --watch",
     "test:inspect": "npm test -- --inspect",
     "test:update": "npm run mocha --update"
-  }
+  },
+  "types": "dist/index.d.ts"
 }
