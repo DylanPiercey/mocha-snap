@@ -1,4 +1,3 @@
-import { setImmediate } from "timers/promises";
 import snapshot from "..";
 
 it("takes a single snapshot", async () => {
@@ -18,10 +17,10 @@ it("takes multiple snapshots", async () => {
 
 it("takes an error snapshot", async () => {
   await snapshot(async () => {
-    void setImmediate().then(() => Promise.reject(new Error("fail")));
-    void setImmediate().then(() => Promise.reject(new Error("twice")));
-    await setImmediate();
-    await setImmediate();
+    void tick().then(() => Promise.reject(new Error("fail")));
+    void tick().then(() => Promise.reject(new Error("twice")));
+    await tick();
+    await tick();
   });
 });
 
@@ -43,3 +42,7 @@ it("takes an extension override snapshot", async () => {
     ext: "html",
   });
 });
+
+function tick() {
+  return new Promise((resolve) => setImmediate(resolve));
+}
