@@ -151,14 +151,12 @@ async function resolveFixture(fixture: unknown) {
       }
     };
 
-    if (typeof process !== "undefined") {
-      process.on("uncaughtException", addError);
-      process.on("unhandledRejection", addError);
-    }
-
-    if (typeof window !== "undefined") {
+    if (typeof window === "object") {
       window.addEventListener("error", addError as any);
       window.addEventListener("unhandledrejection", addError as any);
+    } else if (typeof process === "object") {
+      process.on("uncaughtException", addError);
+      process.on("unhandledRejection", addError);
     }
 
     try {
@@ -166,14 +164,12 @@ async function resolveFixture(fixture: unknown) {
     } catch (curErr) {
       addError(curErr);
     } finally {
-      if (typeof process !== "undefined") {
-        process.removeListener("uncaughtException", addError);
-        process.removeListener("unhandledRejection", addError);
-      }
-
-      if (typeof window !== "undefined") {
+      if (typeof window === "object") {
         window.removeEventListener("error", addError as any);
         window.removeEventListener("unhandledrejection", addError as any);
+      } else if (typeof process === "object") {
+        process.removeListener("uncaughtException", addError);
+        process.removeListener("unhandledRejection", addError);
       }
     }
 
