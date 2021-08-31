@@ -1,7 +1,7 @@
 {
   "name": "mocha-snap",
   "description": "File based snapshotting for Mocha tests.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": "Dylan Piercey <pierceydylan@gmail.com>",
   "bugs": "https://github.com/dylanpiercey/mocha-snap/issues",
   "dependencies": {

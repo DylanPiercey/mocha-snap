@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.3](https://github.com/dylanpiercey/mocha-snap/compare/v1.0.2...v1.0.3) (2021-08-31)
+
+
+### Bug Fixes
+
+* avoid adding double uncaught handlers ([4120aed](https://github.com/dylanpiercey/mocha-snap/commit/4120aedb53e1f615b3eaa2797a2556859cc44f3e))
+
 ### [1.0.2](https://github.com/dylanpiercey/mocha-snap/compare/v1.0.1...v1.0.2) (2021-08-25)
 
 
