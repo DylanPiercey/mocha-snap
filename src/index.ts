@@ -20,10 +20,12 @@ const store = ((fs as any).__snap__ ??= {
   files: new Map(),
   indexes: new Map(),
   running: false,
+  curTest: undefined,
 }) as {
   files: Map<string, string | null>;
   indexes: Map<Mocha.Test, number>;
   pending: boolean;
+  curTest: Mocha.Test | undefined;
 };
 const inspectOpts: Parameters<typeof inspect>[1] = {
   depth: null,
@@ -35,18 +37,17 @@ const inspectOpts: Parameters<typeof inspect>[1] = {
   maxArrayLength: null,
   maxStringLength: null,
 };
-let curTest: Mocha.Test;
 
 export default async function snapshot(
   fixture: unknown,
   opts?: { ext: string }
 ) {
-  const snapshotDir = path.join(getDir(curTest), snapDir);
+  const snapshotDir = path.join(getDir(store.curTest), snapDir);
   const result = await resolveFixture(fixture);
-  const index = store.indexes.get(curTest)!;
+  const index = store.indexes.get(store.curTest!)!;
   const ext = result.error ? "error.txt" : opts?.ext ?? "txt";
-  let title = getTitle(curTest);
-  store.indexes.set(curTest, index + 1);
+  let title = getTitle(store.curTest);
+  store.indexes.set(store.curTest!, index + 1);
 
   if (index) title += `.${index}`;
 
@@ -81,8 +82,7 @@ export const mochaHooks = {
     store.pending = true;
   },
   beforeEach(this: Mocha.Context) {
-    curTest = this.currentTest!;
-    store.indexes.set(curTest, 0);
+    store.indexes.set((store.curTest = this.currentTest!), 0);
   },
   async afterAll() {
     if (!store.pending) return;
@@ -107,7 +107,7 @@ export const mochaHooks = {
       const ignore: string[] = Array.from(store.files.keys(), (file) =>
         escapeGlob(path.relative(cwd, file))
       );
-      const lastTest = curTest;
+      const lastTest = store.curTest!;
       let rootSuite = lastTest.parent!;
       while (rootSuite.parent) rootSuite = rootSuite.parent;
 
