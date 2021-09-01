@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0](https://github.com/dylanpiercey/mocha-snap/compare/v1.0.3...v2.0.0) (2021-09-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* will now error if mocha root hooks not registered
+
+### Features
+
+* convert to using mocha root hooks ([392a2af](https://github.com/dylanpiercey/mocha-snap/commit/392a2aff6f2cd1086cedd5fddc26cfaeae9b4590))
+
 ### [1.0.3](https://github.com/dylanpiercey/mocha-snap/compare/v1.0.2...v1.0.3) (2021-08-31)
 
 
