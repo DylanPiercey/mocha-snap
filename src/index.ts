@@ -1,3 +1,4 @@
+import type * as Mocha from "mocha";
 import fs from "fs";
 import path from "path";
 import assert from "assert";
@@ -9,6 +10,8 @@ const update =
 const noop = () => {};
 const cwd = process.cwd();
 const cwdRegExp = new RegExp(escapeRegExp(cwd), "gi");
+const testMissingMsg =
+  "Cannot snapshot outside of a test. Did you enable the Mocha root hook for mocha-snap?";
 const snapDir = "__snapshots__";
 const store = ((fs as any).__snap__ ??= {
   // Hangs storage off of fs object to ensure it is
@@ -73,70 +76,73 @@ export default async function snapshot(
   }
 }
 
-before(() => (store.pending = true));
-beforeEach(function () {
-  curTest = this.currentTest!;
-  store.indexes.set(curTest, 0);
-});
+export const mochaHooks = {
+  beforeAll() {
+    store.pending = true;
+  },
+  beforeEach(this: Mocha.Context) {
+    curTest = this.currentTest!;
+    store.indexes.set(curTest, 0);
+  },
+  async afterAll() {
+    if (!store.pending) return;
 
-after(async () => {
-  if (!store.pending) return;
-
-  // First we write all explicit snapshot updates.
-  await Promise.all(
-    Array.from(store.files, async ([filename, content]) => {
-      if (content === null) {
-        await unlinkWithDirectory(filename);
-      } else {
-        await fs.promises.mkdir(path.dirname(filename), { recursive: true });
-        await fs.promises.writeFile(filename, content, "utf-8");
-      }
-    })
-  );
-
-  if (update) {
-    // In update mode we try to clean up any old snapshots
-    // We look for all __snapshots__ directories in the project
-    // then remove any files that do not match a skipped test, or
-    // a recently written file.
-    const ignore: string[] = Array.from(store.files.keys(), (file) =>
-      escapeGlob(path.relative(cwd, file))
-    );
-    const lastTest = curTest;
-    let rootSuite = lastTest.parent!;
-    while (rootSuite.parent) rootSuite = rootSuite.parent;
-
-    (function addSkippedTests(parent: Mocha.Suite) {
-      for (const test of parent.tests) {
-        if (!store.indexes.has(test)) {
-          ignore.push(
-            `${escapeGlob(
-              path.relative(
-                cwd,
-                path.join(getDir(test), snapDir, getTitle(test))
-              )
-            )}.*`
-          );
+    // First we write all explicit snapshot updates.
+    await Promise.all(
+      Array.from(store.files, async ([filename, content]) => {
+        if (content === null) {
+          await unlinkWithDirectory(filename);
+        } else {
+          await fs.promises.mkdir(path.dirname(filename), { recursive: true });
+          await fs.promises.writeFile(filename, content, "utf-8");
         }
-      }
+      })
+    );
 
-      for (const suite of parent.suites) {
-        addSkippedTests(suite);
-      }
-    })(rootSuite);
+    if (update) {
+      // In update mode we try to clean up any old snapshots
+      // We look for all __snapshots__ directories in the project
+      // then remove any files that do not match a skipped test, or
+      // a recently written file.
+      const ignore: string[] = Array.from(store.files.keys(), (file) =>
+        escapeGlob(path.relative(cwd, file))
+      );
+      const lastTest = curTest;
+      let rootSuite = lastTest.parent!;
+      while (rootSuite.parent) rootSuite = rootSuite.parent;
 
-    for await (const filename of glob.stream(`**/${snapDir}/**`, {
-      cwd,
-      ignore,
-    }) as AsyncIterable<string>) {
-      await unlinkWithDirectory(filename);
+      (function addSkippedTests(parent: Mocha.Suite) {
+        for (const test of parent.tests) {
+          if (!store.indexes.has(test)) {
+            ignore.push(
+              `${escapeGlob(
+                path.relative(
+                  cwd,
+                  path.join(getDir(test), snapDir, getTitle(test))
+                )
+              )}.*`
+            );
+          }
+        }
+
+        for (const suite of parent.suites) {
+          addSkippedTests(suite);
+        }
+      })(rootSuite);
+
+      for await (const filename of glob.stream(`**/${snapDir}/**`, {
+        cwd,
+        ignore,
+      }) as AsyncIterable<string>) {
+        await unlinkWithDirectory(filename);
+      }
     }
-  }
 
-  store.pending = false;
-  store.indexes.clear();
-  store.files.clear();
-});
+    store.pending = false;
+    store.indexes.clear();
+    store.files.clear();
+  },
+};
 
 async function resolveFixture(fixture: unknown) {
   let output = fixture;
@@ -191,18 +197,12 @@ async function resolveFixture(fixture: unknown) {
 }
 
 function getDir(test: Mocha.Test | undefined) {
-  if (!test) {
-    throw new Error("Cannot snapshot outside of a test.");
-  }
-
+  if (!test) throw new Error(testMissingMsg);
   return test.file ? path.dirname(test.file) : cwd;
 }
 
 function getTitle(test: Mocha.Test | undefined) {
-  if (!test) {
-    throw new Error("Cannot snapshot outside of a test.");
-  }
-
+  if (!test) throw new Error(testMissingMsg);
   let cur: Mocha.Test | Mocha.Suite = test;
   let title = "";
 

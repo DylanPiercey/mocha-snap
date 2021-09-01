@@ -38,6 +38,19 @@ File based snapshotting for Mocha tests.
 npm install mocha-snap
 ```
 
+# Setup
+
+This package exposes a [Mocha root hook plugin](https://mochajs.org/#root-hook-plugins-can-export-a-function) that must be loaded before any snapshots can execute. It handles writing updated files to disk and cleaning up.
+
+When running the Mocha CLI, provide `--require mocha-snap` to enable the hook.
+Alternatively you can add the `require` option to your `.mocharc` to look something like:
+
+```json
+{
+  "require": ["mocha-snap"]
+}
+```
+
 # Example
 
 ```javascript
