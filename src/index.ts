@@ -17,14 +17,14 @@ const store = ((fs as any).__snap__ ??= {
   // Hangs storage off of fs object to ensure it is
   // deduped when this module is loaded multiple times
   // (eg via context-require)
+  pending: false,
   files: new Map(),
   indexes: new Map(),
-  running: false,
   curTest: undefined,
 }) as {
+  pending: boolean;
   files: Map<string, string | null>;
   indexes: Map<Mocha.Test, number>;
-  pending: boolean;
   curTest: Mocha.Test | undefined;
 };
 const inspectOpts: Parameters<typeof inspect>[1] = {
