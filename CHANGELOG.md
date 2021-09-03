@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.0.0](https://github.com/dylanpiercey/mocha-snap/compare/v2.0.2...v3.0.0) (2021-09-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* the ext option has been removed
+
+### Features
+
+* switch to name option from ext option ([df4b209](https://github.com/dylanpiercey/mocha-snap/commit/df4b209b5355394613af23cc1867586479c227ad))
+
 ### [2.0.2](https://github.com/dylanpiercey/mocha-snap/compare/v2.0.1...v2.0.2) (2021-09-01)
 
 
