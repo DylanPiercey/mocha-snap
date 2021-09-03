@@ -24,7 +24,7 @@ const store = ((fs as any).__snap__ ??= {
 }) as {
   pending: boolean;
   files: Map<string, string | null>;
-  indexes: Map<Mocha.Test, number>;
+  indexes: Map<Mocha.Test, Record<string, number>>;
   curTest: Mocha.Test | undefined;
 };
 const inspectOpts: Parameters<typeof inspect>[1] = {
@@ -40,19 +40,26 @@ const inspectOpts: Parameters<typeof inspect>[1] = {
 
 export default async function snapshot(
   fixture: unknown,
-  opts?: { ext: string }
+  opts?: { name?: string }
 ) {
-  const snapshotDir = path.join(getDir(store.curTest), snapDir);
+  const title = getTitle(store.curTest);
   const result = await resolveFixture(fixture);
-  const index = store.indexes.get(store.curTest!)!;
-  const ext = result.error ? "error.txt" : opts?.ext ?? "txt";
-  let title = getTitle(store.curTest);
-  store.indexes.set(store.curTest!, index + 1);
+  const indexes = store.indexes.get(store.curTest!)!;
+  const snapshotDir = path.join(getDir(store.curTest), snapDir);
+  let name = (opts && opts.name) || "";
 
-  if (index) title += `.${index}`;
+  if (!name.includes(".")) name += ".txt";
+  if (name[0] !== ".") name = path.sep + name;
+  if (result.error) name = `.error${name}`;
+  if (indexes[name]) {
+    name = `.${indexes[name] + name}`;
+    indexes[name]++;
+  } else {
+    indexes[name] = 1;
+  }
 
-  const expectedFile = path.join(snapshotDir, `${title}.expected.${ext}`);
-  const actualFile = path.join(snapshotDir, `${title}.actual.${ext}`);
+  const expectedFile = path.join(snapshotDir, `${title}.expected${name}`);
+  const actualFile = path.join(snapshotDir, `${title}.actual${name}`);
   const expectedOutput = await fs.promises
     .readFile(expectedFile, "utf-8")
     .catch(noop);
@@ -82,7 +89,7 @@ export const mochaHooks = {
     store.pending = true;
   },
   beforeEach(this: Mocha.Context) {
-    store.indexes.set((store.curTest = this.currentTest!), 0);
+    store.indexes.set((store.curTest = this.currentTest!), {});
   },
   async afterAll() {
     if (!store.pending) return;

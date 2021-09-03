@@ -67,9 +67,9 @@ The above will output a formatted snapshot (using [util.inspect](https://nodejs.
 
 On the initial run, the snapshot is saved and on subsequent runs the current formatted output is compared against the previous output with an error thrown if they are different.
 
-# Custom file extensions
+# Custom file name output
 
-You can pass in an options object as the second parameter with an `ext` property to override the default `txt` file extension for the output snapshots (except when an error occurs).
+You can pass in an options object as the second parameter with an `name` property to override the default `txt` file extension for the output snapshots (except when an error occurs).
 
 It can be useful to create utility functions for snapshotting different types of data to both normalize it, and provide the file extension.
 
@@ -78,19 +78,21 @@ Below we create simple JSON and HTML snapshot wrappers.
 ```javascript
 import snapshot from "mocha-snap";
 
-const snapshotHTML = (val) => snapshot(val, { ext: "html" });
+const snapshotHTML = (val) => snapshot(val, { name: ".html" });
 it("takes an html snapshot", async () => {
   await snapshotHTML("<h1>Hello World!</h1>");
 });
 
 const snapshotJSON = (val) =>
-  snapshot(JSON.stringify(val, null, 2), { ext: "json" });
+  snapshot(JSON.stringify(val, null, 2), { name: ".json" });
 it("takes a json snapshot", async () => {
   await snapshotJSON({
     hello: "world",
   });
 });
 ```
+
+If the `name` does not start with a `.`, then it will be included as a file in the snapshots output directory.
 
 # Updating
 
@@ -133,11 +135,11 @@ it("should throw some exceptions", async () => {
 Unlike some snapshotting tools this module outputs an individual file _per snapshot call_.
 This makes it easier to analyze, diff and manage the individual snapshots.
 
-Output snapshots match the following format: `%TEST_DIRECTORY%/__snapshots__/%TEST_NAME%.%ACTUAL_OR_EXPECTED%.%EXT%`.
+Output snapshots match the following format: `%TEST_DIRECTORY%/__snapshots__/<TEST_NAME><ACTUAL_OR_EXPECTED><NAME>`.
 
 - `TEST_DIRECTORY`: the folder the currently executing test is.
 - `TEST_NAME`: a file friendly name of the currently executing test. Each parent suite will create a new nested directory.
-- `ACTUAL_OR_EXPECTED`: will be `expected` when updating a test, and `actual` when a test has failed the comparison.
-- `EXT`: This will default to `txt` (or `html` if snapshotting a DOM Element), and become `error.txt` if the fixture function errors.
+- `ACTUAL_OR_EXPECTED`: will be `.expected` when updating a test, and `.actual` when a test has failed the comparison. When there is an error this will become `.expected.error` and `.actual.error`.
+- `NAME`: If the `name` is a file extension (eg `.json`) it is appended directly to the test file, otherwise it will be joined by a path separator allowing (eg `result.json` will output a file in the current test folder called `result.json`).
 
 An example output file might look like `src/my-component/__tests__/__snapshots__/my-test-suite/my-test-name.expected.txt`.

@@ -34,12 +34,31 @@ it("takes an extension override snapshot", async () => {
       2
     ),
     {
-      ext: "json",
+      name: ".json",
     }
   );
 
   await snapshot("<div>Hello World</div>", {
-    ext: "html",
+    name: ".html",
+  });
+});
+
+it("takes a name override snapshot", async () => {
+  await snapshot(
+    JSON.stringify(
+      {
+        hello: "world",
+      },
+      null,
+      2
+    ),
+    {
+      name: "result.json",
+    }
+  );
+
+  await snapshot("<div>Hello World</div>", {
+    name: "nested/result.html",
   });
 });
 
