@@ -59,7 +59,7 @@
     "mocha": "mocha 'src/**/__tests__/*.test.ts'",
     "prepare": "husky install",
     "prepublishOnly": "npm run build",
-    "release": "standard-version",
+    "release": "standard-version && git push --follow-tags origin main && npm publish",
     "report": "open ./coverage/lcov-report/index.html",
     "test": "NODE_ENV=test npm run mocha -- --watch",
     "test:inspect": "npm test -- --inspect",
