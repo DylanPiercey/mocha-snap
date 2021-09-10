@@ -32,7 +32,7 @@
   "files": [
     "dist",
     "!**/__tests__",
-    "!*.tsbuildinfo"
+    "!**/*.tsbuildinfo"
   ],
   "homepage": "https://github.com/dylanpiercey/mocha-snap",
   "keywords": [
