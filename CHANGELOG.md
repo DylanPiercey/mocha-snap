@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.0.1](https://github.com/dylanpiercey/mocha-snap/compare/v4.0.0...v4.0.1) (2021-09-10)
+
+
+### Bug Fixes
+
+* prevent tsbuildinfo included in npm publish ([e226906](https://github.com/dylanpiercey/mocha-snap/commit/e2269060ed04edb98857dd57042d675973765e9a))
+
 ## [4.0.0](https://github.com/dylanpiercey/mocha-snap/compare/v3.0.0...v4.0.0) (2021-09-10)
 
 
