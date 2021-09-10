@@ -33,14 +33,10 @@ it("takes an extension override snapshot", async () => {
       null,
       2
     ),
-    {
-      name: ".json",
-    }
+    ".json"
   );
 
-  await snapshot("<div>Hello World</div>", {
-    name: ".html",
-  });
+  await snapshot("<div>Hello World</div>", ".html");
 });
 
 it("takes a name override snapshot", async () => {
@@ -52,14 +48,10 @@ it("takes a name override snapshot", async () => {
       null,
       2
     ),
-    {
-      name: "result.json",
-    }
+    "result.json"
   );
 
-  await snapshot("<div>Hello World</div>", {
-    name: "nested/result.html",
-  });
+  await snapshot("<div>Hello World</div>", "nested/result.html");
 });
 
 function tick() {

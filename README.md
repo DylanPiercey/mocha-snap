@@ -54,10 +54,10 @@ Alternatively you can add the `require` option to your `.mocharc` to look someth
 # Example
 
 ```javascript
-import snapshot from "mocha-snap";
+import snap from "mocha-snap";
 
 it("takes a snapshot", async () => {
-  await snapshot({
+  await snap({
     hello: "world",
   });
 });
@@ -69,30 +69,46 @@ On the initial run, the snapshot is saved and on subsequent runs the current for
 
 # Custom file name output
 
-You can pass in an options object as the second parameter with an `name` property to override the default `txt` file extension for the output snapshots (except when an error occurs).
+The second parameter to `mocha-snap` is the `name` property which can override the default `.txt` file extension for the output snapshots (except when an error occurs).
 
 It can be useful to create utility functions for snapshotting different types of data to both normalize it, and provide the file extension.
 
 Below we create simple JSON and HTML snapshot wrappers.
 
 ```javascript
-import snapshot from "mocha-snap";
+import snap from "mocha-snap";
 
-const snapshotHTML = (val) => snapshot(val, { name: ".html" });
+const snapHTML = (val) => snap(val, ".html");
+const snapJSON = (val) => snap(JSON.stringify(val), ".json");
+
 it("takes an html snapshot", async () => {
-  await snapshotHTML("<h1>Hello World!</h1>");
+  await snapHTML("<h1>Hello World!</h1>");
 });
 
-const snapshotJSON = (val) =>
-  snapshot(JSON.stringify(val, null, 2), { name: ".json" });
 it("takes a json snapshot", async () => {
-  await snapshotJSON({
-    hello: "world",
-  });
+  await snapJSON({ hello: "world" });
 });
 ```
 
-If the `name` does not start with a `.`, then it will be included as a file in the snapshots output directory.
+The `name` property can also be a file path which will be created within a snapshot folder with the name of the current test.
+
+```javascript
+it("takes a nested snapshot", async () => {
+  await snap("Hello", "part-1.txt"); // Outputs a folder snapshot with a "part-1.txt" file.
+  await snap("World", "part-2.txt"); // Adds another file ("part-2.txt") to the the above snapshot folder.
+  await snap("!", "nested/part-3.txt"); // Creates another folder within the output ("nested") with the file "part-3.txt".
+});
+```
+
+When multiple snapshots would have the same resolved file name, the test name is prefixed with an incrementing id.
+This means the following is also perfectly fine.
+
+```javascript
+it("takes a nested snapshot", async () => {
+  await snap("Hello"); // outputs as normal
+  await snap("World"); // outputs with a `.1` prefix
+});
+```
 
 # Updating
 
@@ -120,7 +136,7 @@ This allows you to snapshot test your errors, in aggregate.
 
 ```js
 it("should throw some exceptions", async () => {
-  await snapshot(async () => {
+  await snap(async () => {
     setTimeout(() => {
       throw new Error("Fail during snapshot!");
     }, 100);
@@ -137,8 +153,8 @@ This makes it easier to analyze, diff and manage the individual snapshots.
 
 Output snapshots match the following format: `%TEST_DIRECTORY%/__snapshots__/<TEST_NAME><ACTUAL_OR_EXPECTED><NAME>`.
 
-- `TEST_DIRECTORY`: the folder the currently executing test is.
-- `TEST_NAME`: a file friendly name of the currently executing test. Each parent suite will create a new nested directory.
+- `TEST_DIRECTORY`: the folder the current test is in.
+- `TEST_NAME`: a file friendly name for the current test test. Each parent suite will create a new nested directory.
 - `ACTUAL_OR_EXPECTED`: will be `.expected` when updating a test, and `.actual` when a test has failed the comparison. When there is an error this will become `.expected.error` and `.actual.error`.
 - `NAME`: If the `name` is a file extension (eg `.json`) it is appended directly to the test file, otherwise it will be joined by a path separator allowing (eg `result.json` will output a file in the current test folder called `result.json`).
 

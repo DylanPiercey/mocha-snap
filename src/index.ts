@@ -9,6 +9,7 @@ const update =
   process.env.UPDATE_SNAPSHOTS || process.argv.includes("--update");
 const noop = () => {};
 const cwd = process.cwd();
+const extReg = /\.[^/\\]+$/;
 const cwdRegExp = new RegExp(escapeRegExp(cwd), "gi");
 const testMissingMsg =
   "Cannot snapshot outside of a test. Did you enable the Mocha root hook for mocha-snap?";
@@ -38,18 +39,14 @@ const inspectOpts: Parameters<typeof inspect>[1] = {
   maxStringLength: null,
 };
 
-export default async function snapshot(
-  fixture: unknown,
-  opts?: { name?: string }
-) {
+export default async function snapshot(fixture: unknown, name = "") {
   const title = getTitle(store.curTest);
   const result = await resolveFixture(fixture);
   const indexes = store.indexes.get(store.curTest!)!;
   const snapshotDir = path.join(getDir(store.curTest), snapDir);
-  let name = (opts && opts.name) || "";
 
-  if (!name.includes(".")) name += ".txt";
-  if (name[0] !== ".") name = path.sep + name;
+  if (!extReg.test(name)) name += ".txt";
+  if (name[0] !== "." && name[0] !== path.sep) name = path.sep + name;
   if (result.error) name = `.error${name}`;
   if (indexes[name]) {
     name = `.${indexes[name] + name}`;
@@ -175,7 +172,7 @@ async function resolveFixture(fixture: unknown) {
     try {
       output = await fixture();
     } catch (curErr) {
-      addError(curErr);
+      addError(curErr as Error);
     } finally {
       if (typeof window === "object") {
         window.removeEventListener("error", addError as any);
@@ -267,7 +264,7 @@ function escapeFilename(str: string) {
 }
 
 function escapeGlob(str: string) {
-  return str.replace(/[*?[{}()!\\\\]]/g, "\\$&");
+  return str.replace(/[*?{}()![\]\\]/g, "\\$&");
 }
 
 function escapeRegExp(str: string) {
