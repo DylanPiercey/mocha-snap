@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0](https://github.com/dylanpiercey/mocha-snap/compare/v3.0.0...v4.0.0) (2021-09-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* passing in an object config has been removed
+
+### Features
+
+* simplify config to single name option ([e477434](https://github.com/dylanpiercey/mocha-snap/commit/e477434b6cc5513333ad1b46d0afe00a1376e5da))
+
 ## [3.0.0](https://github.com/dylanpiercey/mocha-snap/compare/v2.0.2...v3.0.0) (2021-09-03)
 
 
