@@ -134,7 +134,9 @@ export const mochaHooks = {
         }
       })(rootSuite);
 
-      for await (const filename of glob.stream(`**/${snapDir}/**`, {
+      ignore.push("**/node_modules");
+
+      for await (const filename of glob.stream(`**/${snapDir}`, {
         cwd,
         ignore,
       }) as AsyncIterable<string>) {
