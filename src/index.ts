@@ -39,11 +39,15 @@ const inspectOpts: Parameters<typeof inspect>[1] = {
   maxStringLength: null,
 };
 
-export default async function snapshot(fixture: unknown, name = "") {
+export default async function snapshot(
+  fixture: unknown,
+  name = "",
+  dir?: string
+) {
   const title = getTitle(store.curTest);
   const result = await resolveFixture(fixture);
   const indexes = store.indexes.get(store.curTest!)!;
-  const snapshotDir = path.join(getDir(store.curTest), snapDir);
+  const snapshotDir = path.join(dir || getDir(store.curTest), snapDir);
 
   if (!extReg.test(name)) name += ".txt";
   if (name[0] !== "." && name[0] !== path.sep) name = path.sep + name;

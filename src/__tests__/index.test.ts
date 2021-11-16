@@ -1,3 +1,4 @@
+import path from "path";
 import snapshot from "..";
 
 it("takes a single snapshot", async () => {
@@ -52,6 +53,20 @@ it("takes a name override snapshot", async () => {
   );
 
   await snapshot("<div>Hello World</div>", "nested/result.html");
+});
+
+it("takes a dir override snapshot", async () => {
+  await snapshot(
+    JSON.stringify(
+      {
+        hello: "world",
+      },
+      null,
+      2
+    ),
+    ".json",
+    path.join(__dirname, "override_snap_dir")
+  );
 });
 
 function tick() {

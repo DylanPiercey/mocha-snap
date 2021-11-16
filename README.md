@@ -110,6 +110,16 @@ it("takes a nested snapshot", async () => {
 });
 ```
 
+# Custom `__snapshots__` folder
+
+By default the `__snapshots__` folder is created in the same directory as the running test, but you can override this by passing in the third parameter `dir`.
+
+```javascript
+it("puts snapshot somewhere else", async () => {
+  await snap("Hello", ".md", process.cwd()); // Put the snapshot in the project root, instead of beside this test.
+});
+```
+
 # Updating
 
 Run your test command with `--update`.
