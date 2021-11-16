@@ -11,8 +11,6 @@ const noop = () => {};
 const cwd = process.cwd();
 const extReg = /\.[^/\\]+$/;
 const cwdRegExp = new RegExp(escapeRegExp(cwd), "gi");
-const testMissingMsg =
-  "Cannot snapshot outside of a test. Did you enable the Mocha root hook for mocha-snap?";
 const snapDir = "__snapshots__";
 const store = ((fs as any).__snap__ ??= {
   // Hangs storage off of fs object to ensure it is
@@ -39,15 +37,12 @@ const inspectOpts: Parameters<typeof inspect>[1] = {
   maxStringLength: null,
 };
 
-export default async function snapshot(
-  fixture: unknown,
-  name = "",
-  dir?: string
-) {
-  const title = getTitle(store.curTest);
+export default async function snap(fixture: unknown, name = "", dir?: string) {
+  const curTest = getTest();
+  const title = dir ? escapeFilename(curTest.title) : getTitle(curTest);
   const result = await resolveFixture(fixture);
   const indexes = store.indexes.get(store.curTest!)!;
-  const snapshotDir = path.join(dir || getDir(store.curTest), snapDir);
+  const snapshotDir = path.join(dir || getDir(curTest), snapDir);
 
   if (!extReg.test(name)) name += ".txt";
   if (name[0] !== "." && name[0] !== path.sep) name = path.sep + name;
@@ -115,7 +110,8 @@ export const mochaHooks = {
       const ignore: string[] = Array.from(store.files.keys(), (file) =>
         escapeGlob(path.relative(cwd, file))
       );
-      const lastTest = store.curTest!;
+
+      const lastTest = getTest();
       let rootSuite = lastTest.parent!;
       while (rootSuite.parent) rootSuite = rootSuite.parent;
 
@@ -206,13 +202,11 @@ async function resolveFixture(fixture: unknown) {
   };
 }
 
-function getDir(test: Mocha.Test | undefined) {
-  if (!test) throw new Error(testMissingMsg);
+function getDir(test: Mocha.Test) {
   return test.file ? path.dirname(test.file) : cwd;
 }
 
-function getTitle(test: Mocha.Test | undefined) {
-  if (!test) throw new Error(testMissingMsg);
+function getTitle(test: Mocha.Test) {
   let cur: Mocha.Test | Mocha.Suite = test;
   let title = "";
 
@@ -258,6 +252,16 @@ function mergeErrors(errors: Error[]) {
       return error;
     }
   }
+}
+
+function getTest() {
+  if (!store.curTest) {
+    throw new Error(
+      "Cannot snapshot outside of a test. Did you enable the Mocha root hook for mocha-snap?"
+    );
+  }
+
+  return store.curTest;
 }
 
 function stripAnsiCodes(str: string) {

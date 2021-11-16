@@ -1,23 +1,23 @@
 import path from "path";
-import snapshot from "..";
+import snap from "..";
 
 it("takes a single snapshot", async () => {
-  await snapshot(1);
+  await snap(1);
 });
 
 describe("when nested", () => {
   it("takes a snapshot", async () => {
-    await snapshot(2);
+    await snap(2);
   });
 });
 
 it("takes multiple snapshots", async () => {
-  await snapshot({ a: 1, c: 3, b: 2 });
-  await snapshot("Hello!");
+  await snap({ a: 1, c: 3, b: 2 });
+  await snap("Hello!");
 });
 
 it("takes an error snapshot", async () => {
-  await snapshot(async () => {
+  await snap(async () => {
     void tick().then(() => Promise.reject(new Error("fail")));
     void tick().then(() => Promise.reject(new Error("twice")));
     await tick();
@@ -26,7 +26,7 @@ it("takes an error snapshot", async () => {
 });
 
 it("takes an extension override snapshot", async () => {
-  await snapshot(
+  await snap(
     JSON.stringify(
       {
         hello: "world",
@@ -37,11 +37,11 @@ it("takes an extension override snapshot", async () => {
     ".json"
   );
 
-  await snapshot("<div>Hello World</div>", ".html");
+  await snap("<div>Hello World</div>", ".html");
 });
 
 it("takes a name override snapshot", async () => {
-  await snapshot(
+  await snap(
     JSON.stringify(
       {
         hello: "world",
@@ -52,11 +52,11 @@ it("takes a name override snapshot", async () => {
     "result.json"
   );
 
-  await snapshot("<div>Hello World</div>", "nested/result.html");
+  await snap("<div>Hello World</div>", "nested/result.html");
 });
 
 it("takes a dir override snapshot", async () => {
-  await snapshot(
+  await snap(
     JSON.stringify(
       {
         hello: "world",
@@ -67,6 +67,22 @@ it("takes a dir override snapshot", async () => {
     ".json",
     path.join(__dirname, "override_snap_dir")
   );
+});
+
+describe("when nested", () => {
+  it("takes a dir override snapshot", async () => {
+    await snap(
+      JSON.stringify(
+        {
+          hello: "world",
+        },
+        null,
+        2
+      ),
+      ".json",
+      path.join(__dirname, "override_snap_dir_nested")
+    );
+  });
 });
 
 function tick() {
