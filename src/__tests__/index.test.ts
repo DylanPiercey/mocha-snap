@@ -1,3 +1,4 @@
+/* eslint-disable no-irregular-whitespace */
 import path from "path";
 import snap from "..";
 
@@ -87,6 +88,10 @@ describe("when nested", () => {
 
 it("takes an inline snapshot", async () => {
   await snap.inline(1, `1`);
+  await snap.inline(
+    `\`\${"\\"    \\n\\r\\\\\\x3C\\u2028\\u2029some other content"`,
+    `\`\${"\\"    \\n\\r\\\\\\x3C\\u2028\\u2029some other content"`
+  );
   await snap.inline(
     () => "Hello World".repeat(3),
     `Hello WorldHello WorldHello World`
