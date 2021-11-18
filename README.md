@@ -30,7 +30,7 @@
   </a>
 </h1>
 
-File based snapshotting for Mocha tests.
+Snapshot testing for Mocha with support for both file & inline snapshots.
 
 # Installation
 
@@ -51,7 +51,37 @@ Alternatively you can add the `require` option to your `.mocharc` to look someth
 }
 ```
 
-# Example
+# Inline snapshots
+
+## Example
+
+```javascript
+import snap from "mocha-snap";
+
+it("takes a snapshot", async () => {
+  await snap.inline({
+    hello: "world",
+  });
+});
+```
+
+The above will [format](#Serializing%20snapshots) the data passed to `snap.inline` and update the test file to pass the expected content in as the second argument.
+This will then update the test to include the following:
+
+```js
+await snap.inline(
+  {
+    hello: "world",
+  },
+  `{ hello: "world" }`
+);
+```
+
+After that point the expected and actual values are compared and an error is thrown if there is no match. You can [update the snapshot from the cli](#updating).
+
+# File snapshots
+
+## Example
 
 ```javascript
 import snap from "mocha-snap";
@@ -63,11 +93,10 @@ it("takes a snapshot", async () => {
 });
 ```
 
-The above will output a formatted snapshot (using [util.inspect](https://nodejs.org/dist/latest-v16.x/docs/api/util.html#util_util_inspect_object_options)) and save it to `%TEST_DIRECTORY%/__snapshots__/takes-a-snapshot.expected.txt`. When a string into the `snapshot` function it will not perform any formatting and snapshot the string as is.
+The above will [format](#Serializing%20snapshots) the data passed to `snap` and save it to `%TEST_DIRECTORY%/__snapshots__/takes-a-snapshot.expected.txt`.
+If the snapshot file already exists, it will be compared with the current content and an error is thrown if there is no match. You can [update the snapshot from the cli](#updating).
 
-On the initial run, the snapshot is saved and on subsequent runs the current formatted output is compared against the previous output with an error thrown if they are different.
-
-# Custom file name output
+## Custom file name output
 
 The second parameter to `mocha-snap` is the `name` property which can override the default `.txt` file extension for the output snapshots (except when an error occurs).
 
@@ -110,7 +139,7 @@ it("takes a nested snapshot", async () => {
 });
 ```
 
-# Custom `__snapshots__` folder
+## Custom `__snapshots__` folder
 
 By default the `__snapshots__` folder is created in the same directory as the running test, but you can override this by passing in the third parameter `dir`.
 
@@ -120,9 +149,24 @@ it("puts snapshot somewhere else", async () => {
 });
 ```
 
+## Output files
+
+Unlike some snapshotting tools this module outputs an individual file _per snapshot call_.
+This makes it easier to analyze, diff and manage the individual snapshots.
+
+Output snapshots match the following format: `%TEST_DIRECTORY%/__snapshots__/<TEST_NAME><ACTUAL_OR_EXPECTED><NAME>`.
+
+- `TEST_DIRECTORY`: the folder the current test is in.
+- `TEST_NAME`: a file friendly name for the current test test. Each parent suite will create a new nested directory.
+- `ACTUAL_OR_EXPECTED`: will be `.expected` when updating a test, and `.actual` when a test has failed the comparison. When there is an error this will become `.expected.error` and `.actual.error`.
+- `NAME`: If the `name` is a file extension (eg `.json`) it is appended directly to the test file, otherwise it will be joined by a path separator allowing (eg `result.json` will output a file in the current test folder called `result.json`).
+
+An example output file might look like `src/my-component/__tests__/__snapshots__/my-test-suite/my-test-name.expected.txt`.
+
 # Updating
 
 Run your test command with `--update`.
+If the snapshot was previously empty it is auto saved, even without `--update` being used.
 
 ```terminal
 mocha --update
@@ -133,6 +177,11 @@ Or set the `UPDATE_SNAPSHOTS` environment variable.
 ```terminal
 UPDATE_SNAPSHOTS=1 mocha
 ```
+
+# Serializing snapshots
+
+If a `string` is passed to one of the snapshot api's that string will be saved as the raw snapshot content.
+If anything else is passed it is first serialized using using [util.inspect](https://nodejs.org/dist/latest-v16.x/docs/api/util.html#util_util_inspect_object_options).
 
 # Catching errors
 
@@ -155,17 +204,3 @@ it("should throw some exceptions", async () => {
   });
 });
 ```
-
-# Output files
-
-Unlike some snapshotting tools this module outputs an individual file _per snapshot call_.
-This makes it easier to analyze, diff and manage the individual snapshots.
-
-Output snapshots match the following format: `%TEST_DIRECTORY%/__snapshots__/<TEST_NAME><ACTUAL_OR_EXPECTED><NAME>`.
-
-- `TEST_DIRECTORY`: the folder the current test is in.
-- `TEST_NAME`: a file friendly name for the current test test. Each parent suite will create a new nested directory.
-- `ACTUAL_OR_EXPECTED`: will be `.expected` when updating a test, and `.actual` when a test has failed the comparison. When there is an error this will become `.expected.error` and `.actual.error`.
-- `NAME`: If the `name` is a file extension (eg `.json`) it is appended directly to the test file, otherwise it will be joined by a path separator allowing (eg `result.json` will output a file in the current test folder called `result.json`).
-
-An example output file might look like `src/my-component/__tests__/__snapshots__/my-test-suite/my-test-name.expected.txt`.

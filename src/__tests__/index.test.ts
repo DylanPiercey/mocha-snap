@@ -85,6 +85,22 @@ describe("when nested", () => {
   });
 });
 
+it("takes an inline snapshot", async () => {
+  await snap.inline(1, `1`);
+  await snap.inline(
+    () => "Hello World".repeat(3),
+    `Hello WorldHello WorldHello World`
+  );
+  await snap.inline(
+    {
+      hello: "world",
+    },
+    `{
+  hello: 'world'
+}`
+  );
+});
+
 function tick() {
   return new Promise((resolve) => setImmediate(resolve));
 }
