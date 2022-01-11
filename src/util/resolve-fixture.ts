@@ -19,16 +19,19 @@ export default async function resolveFixture(fixture: unknown) {
 
   if (typeof fixture === "function") {
     const trackedErrors: Error[] = [];
-    const addError = (ev: Error | ErrorEvent) => {
-      const curErr = (ev as ErrorEvent).error || (ev as Error);
+    const addError = (ev: Error | ErrorEvent | PromiseRejectionEvent) => {
+      const curErr =
+        (ev as PromiseRejectionEvent).reason ||
+        (ev as ErrorEvent).error ||
+        (ev as Error);
       if (!trackedErrors.includes(curErr)) {
         trackedErrors.push(curErr);
       }
     };
 
     if (typeof window === "object") {
-      window.addEventListener("error", addError as any);
-      window.addEventListener("unhandledrejection", addError as any);
+      window.addEventListener("error", addError);
+      window.addEventListener("unhandledrejection", addError);
     } else if (typeof process === "object") {
       process.on("uncaughtException", addError);
       process.on("unhandledRejection", addError);
@@ -40,8 +43,8 @@ export default async function resolveFixture(fixture: unknown) {
       addError(curErr as Error);
     } finally {
       if (typeof window === "object") {
-        window.removeEventListener("error", addError as any);
-        window.removeEventListener("unhandledrejection", addError as any);
+        window.removeEventListener("error", addError);
+        window.removeEventListener("unhandledrejection", addError);
       } else if (typeof process === "object") {
         process.removeListener("uncaughtException", addError);
         process.removeListener("unhandledRejection", addError);
