@@ -28,6 +28,10 @@ export default async function resolveFixture(fixture: unknown) {
       if (!trackedErrors.includes(curErr)) {
         trackedErrors.push(curErr);
       }
+
+      if ((ev as ErrorEvent).preventDefault) {
+        (ev as ErrorEvent).preventDefault();
+      }
     };
 
     if (typeof window === "object") {
