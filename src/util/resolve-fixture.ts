@@ -20,10 +20,11 @@ export default async function resolveFixture(fixture: unknown) {
   if (typeof fixture === "function") {
     const trackedErrors: Error[] = [];
     const addError = (ev: Error | ErrorEvent | PromiseRejectionEvent) => {
-      const curErr =
+      let curErr =
         (ev as PromiseRejectionEvent).reason ||
         (ev as ErrorEvent).error ||
         (ev as Error);
+      curErr = curErr.detail || curErr;
       if (!trackedErrors.includes(curErr)) {
         trackedErrors.push(curErr);
       }
