@@ -6,6 +6,7 @@ import escapeFilename from "./util/escape-file-name";
 import store from "./util/store";
 import { getTest, getDir, getTitle } from "./util/cur-test";
 import { cwd, update, snapDir } from "./constants";
+import { normalizeNL } from "./util/normalize-nl";
 
 const noop = () => {};
 const extReg = /\.[^/\\]+$/;
@@ -42,7 +43,7 @@ export default async function snap(fixture: unknown, name = "", dir?: string) {
     try {
       assert.strictEqual(
         result.output,
-        expectedOutput,
+        normalizeNL(expectedOutput),
         path.relative(cwd, actualFile)
       );
     } catch (snapErr) {

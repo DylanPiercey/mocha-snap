@@ -2,6 +2,7 @@ import assert from "assert";
 import resolveFixture from "./util/resolve-fixture";
 import { update } from "./constants";
 import store from "./util/store";
+import { normalizeNL } from "./util/normalize-nl";
 
 const stackFrameReg = /^\s*at\s*[^ ]+ \((.*?):(\d+):(\d+)\)\s*$/m;
 
@@ -14,7 +15,7 @@ export function inlineSnap(fixture: unknown, expectedOutput?: unknown) {
     const missingOutput = arguments.length < 2;
 
     try {
-      assert.strictEqual(result.output, expectedOutput);
+      assert.strictEqual(result.output, normalizeNL(expectedOutput));
     } catch (snapErr) {
       if (update || (missingOutput && !result.error)) {
         const [, file, line, col] = stackFrameReg.exec(err.stack!)!;

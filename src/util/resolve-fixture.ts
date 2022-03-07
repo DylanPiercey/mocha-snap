@@ -1,5 +1,6 @@
 import { inspect } from "util";
 import { cwd } from "../constants";
+import { normalizeNL } from "./normalize-nl";
 
 const cwdRegExp = new RegExp(escapeRegExp(cwd), "gi");
 const inspectOpts: Parameters<typeof inspect>[1] = {
@@ -69,7 +70,9 @@ export default async function resolveFixture(fixture: unknown) {
 
   return {
     error,
-    output: typeof output === "string" ? output : inspect(output, inspectOpts),
+    output: normalizeNL(
+      typeof output === "string" ? output : inspect(output, inspectOpts)
+    ),
   };
 }
 
