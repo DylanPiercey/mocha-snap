@@ -5,7 +5,7 @@ import resolveFixture from "./util/resolve-fixture";
 import escapeFilename from "./util/escape-file-name";
 import store from "./util/store";
 import { getTest, getDir, getTitle } from "./util/cur-test";
-import { cwd, update, snapDir } from "./constants";
+import { cwd, update, updateErrors, snapDir } from "./constants";
 import { normalizeNL } from "./util/normalize-nl";
 
 const noop = () => {};
@@ -20,32 +20,60 @@ export default async function snap(fixture: unknown, name = "", dir?: string) {
 
   if (!extReg.test(name)) name += ".txt";
   if (name[0] !== "." && name[0] !== path.sep) name = path.sep + name;
-  if (result.error) name = `.error${name}`;
   if (indexes[name]) {
     name = `.${indexes[name] + name}`;
     indexes[name]++;
   } else {
     indexes[name] = 1;
   }
+  const errorName = `.error${name}`;
 
   const expectedFile = path.join(snapshotDir, `${title}.expected${name}`);
+  const expectedErrorFile = path.join(
+    snapshotDir,
+    `${title}.expected${errorName}`
+  );
   const actualFile = path.join(snapshotDir, `${title}.actual${name}`);
   const expectedOutput = await fs.promises
     .readFile(expectedFile, "utf-8")
     .catch(noop);
+  const expectedErrorOutput = await fs.promises
+    .readFile(expectedErrorFile, "utf-8")
+    .catch(noop);
   const shouldUpdate =
-    update || (expectedOutput === undefined && !result.error);
+    updateErrors ||
+    (update && result.error
+      ? expectedOutput === undefined
+      : expectedErrorOutput === undefined) ||
+    (expectedOutput === undefined &&
+      expectedErrorOutput === undefined &&
+      !result.error);
 
   if (shouldUpdate) {
-    store.fileSnaps.set(expectedFile, result.output);
+    if (result.error) {
+      store.fileSnaps.set(expectedErrorFile, result.output);
+      store.fileSnaps.set(expectedFile, null);
+    } else {
+      store.fileSnaps.set(expectedErrorFile, result.output);
+      store.fileSnaps.set(expectedFile, null);
+    }
     store.fileSnaps.set(actualFile, null);
   } else {
+    if (expectedOutput !== undefined && expectedErrorOutput !== undefined) {
+      throw new Error(
+        `Ambiguous Snapshot: Both ${path.relative(
+          cwd,
+          expectedFile
+        )} and ${path.relative(cwd, expectedErrorFile)} files exist`
+      );
+    }
     try {
       assert.strictEqual(
         result.output,
-        normalizeNL(expectedOutput),
+        normalizeNL(expectedOutput ?? expectedErrorOutput),
         path.relative(cwd, actualFile)
       );
+      store.fileSnaps.set(actualFile, null);
     } catch (snapErr) {
       if (expectedOutput === undefined && result.error) throw result.error;
       store.fileSnaps.set(actualFile, result.output);
