@@ -18,7 +18,7 @@ it("takes multiple snapshots", async () => {
 });
 
 it("takes an error snapshot", async () => {
-  await snap(async () => {
+  await snap.catch(async () => {
     void tick().then(() => Promise.reject(new Error("fail")));
     void tick().then(() => Promise.reject(new Error("twice")));
     await tick();
@@ -27,62 +27,32 @@ it("takes an error snapshot", async () => {
 });
 
 it("takes an extension override snapshot", async () => {
-  await snap(
-    JSON.stringify(
-      {
-        hello: "world",
-      },
-      null,
-      2
-    ),
-    ".json"
-  );
+  await snap(JSON.stringify({ hello: "world" }, null, 2), { ext: ".json" });
 
-  await snap("<div>Hello World</div>", ".html");
+  await snap("<div>Hello World</div>", { ext: ".html" });
 });
 
 it("takes a name override snapshot", async () => {
-  await snap(
-    JSON.stringify(
-      {
-        hello: "world",
-      },
-      null,
-      2
-    ),
-    "result.json"
-  );
+  await snap(JSON.stringify({ hello: "world" }, null, 2), {
+    file: "result.json",
+  });
 
-  await snap("<div>Hello World</div>", "nested/result.html");
+  await snap("<div>Hello World</div>", { file: "nested/result.html" });
 });
 
 it("takes a dir override snapshot", async () => {
-  await snap(
-    JSON.stringify(
-      {
-        hello: "world",
-      },
-      null,
-      2
-    ),
-    ".json",
-    path.join(__dirname, "override_snap_dir")
-  );
+  await snap(JSON.stringify({ hello: "world" }, null, 2), {
+    ext: ".json",
+    dir: path.join(__dirname, "override_snap_dir"),
+  });
 });
 
 describe("when nested", () => {
   it("takes a dir override snapshot", async () => {
-    await snap(
-      JSON.stringify(
-        {
-          hello: "world",
-        },
-        null,
-        2
-      ),
-      ".json",
-      path.join(__dirname, "override_snap_dir_nested")
-    );
+    await snap(JSON.stringify({ hello: "world" }, null, 2), {
+      ext: ".json",
+      dir: path.join(__dirname, "override_snap_dir_nested"),
+    });
   });
 });
 
@@ -97,13 +67,14 @@ it("takes an inline snapshot", async () => {
     `Hello WorldHello WorldHello World`
   );
   await snap.inline(
-    {
-      hello: "world",
-    },
+    { hello: "world" },
     `{
   hello: 'world'
 }`
   );
+  await snap.inline.catch(() => {
+    throw new Error("oops");
+  }, `oops`);
 });
 
 function tick() {

@@ -107,8 +107,8 @@ Below we create simple JSON and HTML snapshot wrappers.
 ```javascript
 import snap from "mocha-snap";
 
-const snapHTML = (val) => snap(val, ".html");
-const snapJSON = (val) => snap(JSON.stringify(val), ".json");
+const snapHTML = (val) => snap(val, { ext: ".html" });
+const snapJSON = (val) => snap(JSON.stringify(val), { ext: ".json" });
 
 it("takes an html snapshot", async () => {
   await snapHTML("<h1>Hello World!</h1>");
@@ -123,9 +123,9 @@ The `name` property can also be a file path which will be created within a snaps
 
 ```javascript
 it("takes a nested snapshot", async () => {
-  await snap("Hello", "part-1.txt"); // Outputs a folder snapshot with a "part-1.txt" file.
-  await snap("World", "part-2.txt"); // Adds another file ("part-2.txt") to the the above snapshot folder.
-  await snap("!", "nested/part-3.txt"); // Creates another folder within the output ("nested") with the file "part-3.txt".
+  await snap("Hello", { file: "part-1.txt" }); // Outputs a folder snapshot with a "part-1.txt" file.
+  await snap("World", { file: "part-2.txt" }); // Adds another file ("part-2.txt") to the the above snapshot folder.
+  await snap("!", { file: "nested/part-3.txt" }); // Creates another folder within the output ("nested") with the file "part-3.txt".
 });
 ```
 
@@ -145,7 +145,7 @@ By default the `__snapshots__` folder is created in the same directory as the ru
 
 ```javascript
 it("puts snapshot somewhere else", async () => {
-  await snap("Hello", ".md", process.cwd()); // Put the snapshot in the project root, instead of beside this test.
+  await snap("Hello", { ext: ".md", dir: process.cwd() }); // Put the snapshot in the project root, instead of beside this test.
 });
 ```
 
@@ -158,8 +158,8 @@ Output snapshots match the following format: `%TEST_DIRECTORY%/__snapshots__/<TE
 
 - `TEST_DIRECTORY`: the folder the current test is in.
 - `TEST_NAME`: a file friendly name for the current test test. Each parent suite will create a new nested directory.
-- `ACTUAL_OR_EXPECTED`: will be `.expected` when updating a test, and `.actual` when a test has failed the comparison. When there is an error this will become `.expected.error` and `.actual.error`.
-- `NAME`: If the `name` is a file extension (eg `.json`) it is appended directly to the test file, otherwise it will be joined by a path separator allowing (eg `result.json` will output a file in the current test folder called `result.json`).
+- `ACTUAL_OR_EXPECTED`: will be `.expected` when updating a test, and `.actual` when a test has failed the comparison.
+- `NAME`: If the `ext` is passed (eg `.json`) it is appended directly to the test file, otherwise the `file` is joined by a path separator allowing (eg `result.json` will output a file in the current test folder called `result.json`). If neither `ext` nor `file` is provided, `.txt` will be used as the `ext`.
 
 An example output file might look like `src/my-component/__tests__/__snapshots__/my-test-suite/my-test-name.expected.txt`.
 
@@ -185,17 +185,14 @@ If anything else is passed it is first serialized using using [util.inspect](htt
 
 # Catching errors
 
-You can also pass a function the `snapshot` api which will execute the function, `await` any returned promises, and snapshot the resolved value.
+You can also pass a function the `snap.catch` or `snap.inline.cach` apis which will execute the function, `await` any returned promises, and snapshot the thrown errors.
 
 The useful part here is that during that function execution _all_ errors (including uncaught ones) are tracked.
-If there are any errors before we take the snapshot, the entire snapshot will error.
-
-When [updating](#updating) with a snapshot that has errored it will instead snapshot all errors.
-This allows you to snapshot test your errors, in aggregate.
+If there are any errors before we take the snapshot, the entire snapshot will error. This allows you to snapshot test your errors, in aggregate.
 
 ```js
 it("should throw some exceptions", async () => {
-  await snap(async () => {
+  await snap.catch(async () => {
     setTimeout(() => {
       throw new Error("Fail during snapshot!");
     }, 100);
