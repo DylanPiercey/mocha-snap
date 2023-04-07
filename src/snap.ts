@@ -5,13 +5,18 @@ import resolveFixture from "./util/resolve-fixture";
 import escapeFilename from "./util/escape-file-name";
 import store from "./util/store";
 import { getTest, getDir, getTitle } from "./util/cur-test";
-import { cwd, update, updateErrors, snapDir } from "./constants";
+import { cwd, update, snapDir } from "./constants";
 import { normalizeNL } from "./util/normalize-nl";
 
 const noop = () => {};
 const extReg = /\.[^/\\]+$/;
 
-export default async function snap(fixture: unknown, name = "", dir?: string) {
+export default async function snap(
+  fixture: unknown,
+  name = "",
+  dir?: string,
+  expectError?: boolean
+) {
   const curTest = getTest();
   const title = dir ? escapeFilename(curTest.title) : getTitle(curTest);
   const result = await resolveFixture(fixture);
@@ -41,36 +46,52 @@ export default async function snap(fixture: unknown, name = "", dir?: string) {
     .readFile(expectedErrorFile, "utf-8")
     .catch(noop);
   const shouldUpdate =
-    updateErrors ||
-    (update && result.error
-      ? expectedOutput === undefined
-      : expectedErrorOutput === undefined) ||
-    (expectedOutput === undefined &&
-      expectedErrorOutput === undefined &&
-      !result.error);
+    update || (expectedOutput === undefined && !result.error);
 
-  if (shouldUpdate) {
+  if (expectError === true && !result.error) {
+    store.fileSnaps.set(actualFile, result.output);
+    throw new Error(`Expected an error but fixture was successful`);
+  } else if (expectError === false && result.error) {
+    throw result.error;
+  } else if (shouldUpdate) {
     if (result.error) {
       store.fileSnaps.set(expectedErrorFile, result.output);
       store.fileSnaps.set(expectedFile, null);
     } else {
-      store.fileSnaps.set(expectedErrorFile, result.output);
-      store.fileSnaps.set(expectedFile, null);
+      store.fileSnaps.set(expectedFile, result.output);
+      store.fileSnaps.set(expectedErrorFile, null);
     }
     store.fileSnaps.set(actualFile, null);
+  } else if (expectedOutput !== undefined && expectError === true) {
+    throw new Error(
+      `There is a successful snapshot at ${path.relative(
+        cwd,
+        expectedFile
+      )} but expected an error`
+    );
+  } else if (expectedErrorOutput !== undefined && expectError === false) {
+    store.fileSnaps.set(actualFile, result.output);
+    throw new Error(
+      `There is an error snapshot at ${path.relative(
+        cwd,
+        expectedErrorFile
+      )} but expected no error`
+    );
+  } else if (
+    expectedOutput !== undefined &&
+    expectedErrorOutput !== undefined
+  ) {
+    throw new Error(
+      `Ambiguous Snapshot: Both ${path.relative(
+        cwd,
+        expectedFile
+      )} and ${path.relative(cwd, expectedErrorFile)} files exist`
+    );
   } else {
-    if (expectedOutput !== undefined && expectedErrorOutput !== undefined) {
-      throw new Error(
-        `Ambiguous Snapshot: Both ${path.relative(
-          cwd,
-          expectedFile
-        )} and ${path.relative(cwd, expectedErrorFile)} files exist`
-      );
-    }
     try {
       assert.strictEqual(
         result.output,
-        normalizeNL(expectedOutput ?? expectedErrorOutput),
+        normalizeNL(result.error ? expectedErrorOutput : expectedOutput),
         path.relative(cwd, actualFile)
       );
       store.fileSnaps.set(actualFile, null);
