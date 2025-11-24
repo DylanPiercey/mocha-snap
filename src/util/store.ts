@@ -43,65 +43,62 @@ export const mochaHooks = {
   beforeEach(this: Mocha.Context) {
     store.indexes.set((store.curTest = this.currentTest!), {});
   },
-  async afterAll() {
+  afterAll() {
     if (!store.pending) return;
 
     try {
       // First we write all explicit snapshot updates.
-      await Promise.all([
-        ...Array.from(store.fileSnaps, async ([filename, content]) => {
-          if (content === null) {
-            await unlinkWithDirectory(filename);
-          } else {
-            await fs.promises.mkdir(path.dirname(filename), {
-              recursive: true,
-            });
-            await fs.promises.writeFile(filename, content, "utf-8");
-          }
-        }),
-        ...Array.from(store.inlineSnaps, async ([filename, content]) => {
-          let pos = 0;
-          let result = "";
-          const src = await fs.promises.readFile(filename, "utf-8");
-          const lines = getLinePositions(src);
-          const edits = content
-            .map(({ line, column, output, stack }) => {
-              const loc = getLastArgumentRange(src, lines[line] + column);
+      for (const [filename, content] of store.fileSnaps) {
+        if (content === null) {
+          unlinkWithDirectory(filename);
+        } else {
+          fs.mkdirSync(path.dirname(filename), { recursive: true });
+          fs.writeFileSync(filename, content, "utf-8");
+        }
+      }
 
-              if (!loc) {
-                throw new Error(`Unexpected snapshot expression:\n${stack}`);
-              }
+      for (const [filename, content] of store.inlineSnaps) {
+        let pos = 0;
+        let result = "";
+        const src = fs.readFileSync(filename, "utf-8");
+        const lines = getLinePositions(src);
+        const edits = content
+          .map(({ line, column, output, stack }) => {
+            const loc = getLastArgumentRange(src, lines[line] + column);
 
-              return {
-                stack,
-                start: loc.start,
-                end: loc.end,
-                data:
-                  loc.start === loc.end
-                    ? `, ${toTemplateLiteral(output)}`
-                    : toTemplateLiteral(output),
-              };
-            })
-            .sort(sortEdits);
-
-          for (const edit of edits) {
-            if (pos && edit.start <= pos) {
-              const err = new Error(
-                "Multiple inline snapshots written to the same location"
-              );
-              err.stack = edit.stack.replace(
-                /^Error:.*$/m,
-                `Error: ${err.message}`
-              );
-              throw err;
+            if (!loc) {
+              throw new Error(`Unexpected snapshot expression:\n${stack}`);
             }
-            result += src.slice(pos, edit.start) + edit.data;
-            pos = edit.end;
-          }
 
-          await fs.promises.writeFile(filename, result + src.slice(pos));
-        }),
-      ]);
+            return {
+              stack,
+              start: loc.start,
+              end: loc.end,
+              data:
+                loc.start === loc.end
+                  ? `, ${toTemplateLiteral(output)}`
+                  : toTemplateLiteral(output),
+            };
+          })
+          .sort(sortEdits);
+
+        for (const edit of edits) {
+          if (pos && edit.start <= pos) {
+            const err = new Error(
+              "Multiple inline snapshots written to the same location"
+            );
+            err.stack = edit.stack.replace(
+              /^Error:.*$/m,
+              `Error: ${err.message}`
+            );
+            throw err;
+          }
+          result += src.slice(pos, edit.start) + edit.data;
+          pos = edit.end;
+        }
+
+        fs.writeFileSync(filename, result + src.slice(pos));
+      }
 
       if (update) {
         // In update mode we try to clean up any old snapshots
@@ -137,33 +134,40 @@ export const mochaHooks = {
 
         ignore.push("**/node_modules");
 
-        for await (const filename of glob.stream(`**/${snapDir}`, {
+        for (const filename of glob.sync(`**/${snapDir}`, {
           cwd,
           ignore,
-        }) as AsyncIterable<string>) {
-          await unlinkWithDirectory(filename);
+        })) {
+          unlinkWithDirectory(filename);
         }
       }
     } finally {
       store.pending = false;
-      store.indexes.clear();
-      store.fileSnaps.clear();
-      store.inlineSnaps.clear();
+      store.indexes = new Map();
+      store.fileSnaps = new Map();
+      store.inlineSnaps = new Map();
     }
   },
 };
 
-async function unlinkWithDirectory(filename: string) {
-  let dir = filename;
+function unlinkWithDirectory(filename: string) {
   try {
-    await fs.promises.unlink(filename);
+    fs.unlinkSync(filename);
+  } catch (err: any) {
+    if (err.code !== "ENOENT") throw err;
+    return;
+  }
 
-    while ((dir = path.dirname(dir)) && dir !== cwd) {
-      // Will stop on non empty dirs.
-      await fs.promises.rmdir(dir);
+  let dir = path.dirname(filename);
+  while (dir !== cwd && !dir.endsWith(snapDir)) {
+    try {
+      fs.rmdirSync(dir);
+    } catch (err: any) {
+      if (err.code === "ENOTEMPTY" || err.code === "ENOENT") break;
+      throw err;
     }
-    // eslint-disable-next-line no-empty
-  } catch {}
+    dir = path.dirname(dir);
+  }
 }
 
 function sortEdits(a: { start: number }, b: { start: number }) {
