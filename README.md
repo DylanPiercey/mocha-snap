@@ -65,7 +65,7 @@ it("takes a snapshot", async () => {
 });
 ```
 
-The above will [format](#Serializing%20snapshots) the data passed to `snap.inline` and update the test file to pass the expected content in as the second argument.
+The above will [format](#serializing-snapshots) the data passed to `snap.inline` and update the test file to pass the expected content in as the second argument.
 This will then update the test to include the following:
 
 ```js
@@ -93,7 +93,7 @@ it("takes a snapshot", async () => {
 });
 ```
 
-The above will [format](#Serializing%20snapshots) the data passed to `snap` and save it to `%TEST_DIRECTORY%/__snapshots__/takes-a-snapshot.expected.txt`.
+The above will [format](#serializing-snapshots) the data passed to `snap` and save it to `%TEST_DIRECTORY%/__snapshots__/takes-a-snapshot.expected.txt`.
 If the snapshot file already exists, it will be compared with the current content and an error is thrown if there is no match. You can [update the snapshot from the cli](#updating).
 
 ## Custom file name output
