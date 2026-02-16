@@ -56,6 +56,24 @@ describe("when nested", () => {
   });
 });
 
+it("takes a dir override from env", async () => {
+  process.env.SNAPSHOTS_PATH = path.join(__dirname, "override_snap_path_env");
+  await snap(JSON.stringify({ hello: "environment" }, null, 2), {
+    ext: ".json",
+  });
+  delete process.env.SNAPSHOTS_PATH;
+});
+
+it("takes a dir override from args", async () => {
+  process.argv.push(
+    "--snapshots_path",
+    path.join(__dirname, "override_snap_path_args")
+  );
+
+  await snap(JSON.stringify({ hello: "arguments" }, null, 2), { ext: ".json" });
+  process.argv.splice(-2);
+});
+
 it("takes an inline snapshot", async () => {
   await snap.inline(1, `1`);
   await snap.inline(

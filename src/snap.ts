@@ -4,7 +4,7 @@ import assert from "assert";
 import resolveFixture from "./util/resolve-fixture";
 import escapeFilename from "./util/escape-file-name";
 import store from "./util/store";
-import { getTest, getDir, getTitle } from "./util/cur-test";
+import { getTest, getDir, getTitle, getPath } from "./util/cur-test";
 import { cwd, update, snapDir } from "./constants";
 import { normalizeNL } from "./util/normalize-nl";
 
@@ -25,7 +25,7 @@ export default (expectError: boolean) => {
     const title = dir ? escapeFilename(curTest.title) : getTitle(curTest);
     const result = await resolveFixture(fixture);
     const indexes = store.indexes.get(store.curTest!)!;
-    const snapshotDir = path.join(dir || getDir(curTest), snapDir);
+    const snapshotDir = path.join(dir || getPath() || getDir(curTest), snapDir);
 
     if (ext && file) {
       throw new Error("Cannot specify both ext and file");
