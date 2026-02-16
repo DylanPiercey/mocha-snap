@@ -27,28 +27,22 @@ export function getPath() {
 function retrievePathFromEnv() {
   const rawPath = env.SNAPSHOTS_PATH;
 
-  if (!rawPath) {
-    return undefined;
-  }
-
-  const absolutePath = path.resolve(rawPath);
-
-  if (!absolutePath.startsWith(cwd)) {
-    throw new Error("Potential path traversal");
-  }
-
-  return absolutePath;
+  return normalizePath(rawPath);
 }
 
 function retrievePathFromArguments() {
   const pathIndex = argv.indexOf("--snapshots_path");
   const pathValue = pathIndex > -1 ? argv[pathIndex + 1] : undefined;
 
-  if (!pathValue) {
+  return normalizePath(pathValue);
+}
+
+function normalizePath(rawPath: string | undefined) {
+  if (!rawPath) {
     return undefined;
   }
 
-  const absolutePath = path.resolve(pathValue);
+  const absolutePath = path.resolve(rawPath);
 
   if (!absolutePath.startsWith(cwd)) {
     throw new Error("Potential path traversal");
