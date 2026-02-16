@@ -19,9 +19,7 @@ export function getPath() {
   const envPath = retrievePathFromEnv();
   const argsPath = retrievePathFromArguments();
 
-  const snapPath = envPath || argsPath;
-
-  return typeof snapPath === "string" ? snapPath : undefined;
+  return envPath || argsPath;
 }
 
 function retrievePathFromEnv() {
