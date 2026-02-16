@@ -77,7 +77,10 @@ it("does not allow path traversal from env", async () => {
     });
     assert.fail("Should've thrown an error");
   } catch (err) {
-    assert.ok(err.message.includes("traversal"), "Expected a traversal error");
+    assert.ok(
+      (err as Error).message.includes("traversal"),
+      "Expected a traversal error"
+    );
   } finally {
     delete process.env.SNAPSHOTS_PATH;
   }
@@ -102,7 +105,10 @@ it("does not allow path traversal from args", async () => {
     });
     assert.fail("Should've thrown an error");
   } catch (err) {
-    assert.ok(err.message.includes("traversal"), "Expected a traversal error");
+    assert.ok(
+      (err as Error).message.includes("traversal"),
+      "Expected a traversal error"
+    );
   } finally {
     process.argv.splice(-2);
   }
