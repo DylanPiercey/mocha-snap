@@ -1,6 +1,7 @@
 /* eslint-disable no-irregular-whitespace */
 import path from "path";
 import snap from "..";
+import assert from "assert";
 
 it("takes a single snapshot", async () => {
   await snap(1);
@@ -54,6 +55,63 @@ describe("when nested", () => {
       dir: path.join(__dirname, "override_snap_dir_nested"),
     });
   });
+});
+
+it("takes a dir override from env", async () => {
+  process.env.SNAPSHOTS_PATH = path.join(__dirname, "override_snap_path_env");
+  await snap(JSON.stringify({ hello: "environment" }, null, 2), {
+    ext: ".json",
+  });
+  delete process.env.SNAPSHOTS_PATH;
+});
+
+it("does not allow path traversal from env", async () => {
+  process.env.SNAPSHOTS_PATH = path.join(
+    "../../../../etc/",
+    "override_snap_path_env"
+  );
+
+  try {
+    await snap(JSON.stringify({ hello: "environment" }, null, 2), {
+      ext: ".json",
+    });
+    assert.fail("Should've thrown an error");
+  } catch (err) {
+    assert.ok(
+      (err as Error).message.includes("traversal"),
+      "Expected a traversal error"
+    );
+  } finally {
+    delete process.env.SNAPSHOTS_PATH;
+  }
+});
+
+it("takes a dir override from args", async () => {
+  process.argv.push(
+    "--snapshots_path",
+    path.join(__dirname, "override_snap_path_args")
+  );
+
+  await snap(JSON.stringify({ hello: "arguments" }, null, 2), { ext: ".json" });
+  process.argv.splice(-2);
+});
+
+it("does not allow path traversal from args", async () => {
+  process.argv.push("--snapshots_path", path.join("../../../etc"));
+
+  try {
+    await snap(JSON.stringify({ hello: "environment" }, null, 2), {
+      ext: ".json",
+    });
+    assert.fail("Should've thrown an error");
+  } catch (err) {
+    assert.ok(
+      (err as Error).message.includes("traversal"),
+      "Expected a traversal error"
+    );
+  } finally {
+    process.argv.splice(-2);
+  }
 });
 
 it("takes an inline snapshot", async () => {
