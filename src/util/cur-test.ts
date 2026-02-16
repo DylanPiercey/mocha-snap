@@ -16,12 +16,45 @@ export function getTest() {
 }
 
 export function getPath() {
+  const envPath = retrievePathFromEnv();
+  const argsPath = retrievePathFromArguments();
+
+  const snapPath = envPath || argsPath;
+
+  return typeof snapPath === "string" ? snapPath : undefined;
+}
+
+function retrievePathFromEnv() {
+  const rawPath = env.SNAPSHOTS_PATH;
+
+  if (!rawPath) {
+    return undefined;
+  }
+
+  const absolutePath = path.resolve(rawPath);
+
+  if (!absolutePath.startsWith(cwd)) {
+    throw new Error("Potential path traversal");
+  }
+
+  return absolutePath;
+}
+
+function retrievePathFromArguments() {
   const pathIndex = argv.indexOf("--snapshots_path");
   const pathValue = pathIndex > -1 ? argv[pathIndex + 1] : undefined;
 
-  const snapPath = env.SNAPSHOTS_PATH || pathValue;
+  if (!pathValue) {
+    return undefined;
+  }
 
-  return typeof snapPath === "string" ? snapPath : undefined;
+  const absolutePath = path.resolve(pathValue);
+
+  if (!absolutePath.startsWith(cwd)) {
+    throw new Error("Potential path traversal");
+  }
+
+  return absolutePath;
 }
 
 export function getDir(test: Mocha.Test) {
